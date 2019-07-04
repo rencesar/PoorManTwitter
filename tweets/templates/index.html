@@ -4,9 +4,9 @@
 {% block container %}
     <div id="vue-container">
     {% verbatim %}
-        <tweet-form></tweet-form>
+        <tweet-form v-on:twitted="reFetchingTwittes()"></tweet-form>
         <h1 style="margin-top: 25px">Tweets</h1>
-        <tweets></tweets>
+        <tweets ref="tweets"></tweets>
     {% endverbatim %}
     </div>
 {% endblock %}
@@ -20,6 +20,11 @@ let app6 = new Vue({
   el: '#vue-container',
   components: {
     tweets, tweetForm,
+  },
+  methods: {
+    reFetchingTwittes (){
+      this.$refs.tweets.fetchData()
+    }
   }
 })
 </script>

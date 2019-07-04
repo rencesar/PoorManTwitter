@@ -1,36 +1,92 @@
+let errorsComponent = Vue.component('error-message', {
+  template: `
+    <p class="text-danger" style="font-size: 13px; margin: 5px">{{ getFirstErrorMessage() }}</p>
+  `,
+  props: {
+    errors: {
+      type: Array,
+      default: []
+    }
+  },
+  methods: {
+    getFirstErrorMessage() {
+      if(this.errors.length){
+        return this.errors[0]
+      }
+      return ''
+    }
+  },
+});
+
+
 let tweetForm = Vue.component('tweet-form', {
-    template: `
-        <form>
-            <div class="mb-1">
-                <label for="usernameInput">Your name:</label>
-                <input v-model="username" id="usernameInput" type="text" class="form-control" placeholder="Name" maxlength="50">
-            </div>
-            <div class="mb-3">
-                <label for="messageInput">Message:</label>
-                <input v-model="message" id="messageInput" type="text" class="form-control" placeholder="Message" maxlength="50">
-            </div>
-    
-            <button type="button" class="btn btn-primary" v-on:click="tweeting">Primary</button>
-        </form>
-    `,
-    data () {
-      return {
-        username: '',
-        message: '',
+  template: `
+    <form @submit="checkingForm">
+      <div class="mb-1">
+        <label for="usernameInput">Your name:</label>
+        <error-message v-bind:errors="errors.name"></error-message>
+        <input v-model="name" id="usernameInput" type="text" class="form-control" placeholder="Name" maxlength="50" required>
+      </div>
+      <div class="mb-3">
+        <label for="messageInput">Message:</label>
+        <error-message v-bind:errors="errors.message"></error-message>
+        <input v-model="message" id="messageInput" type="text" class="form-control" placeholder="Message" maxlength="50" required>
+      </div>
+      <button type="submit" class="btn btn-primary" >Submit</button>
+    </form>
+  `,
+  data () {
+    return {
+      name: '',
+      message: '',
+      errors: {name:[], message: []},
+    }
+  },
+  methods: {
+    tweeting() {
+      fetch('/tweets/', {
+        method: 'POST',
+        body: JSON.stringify({message: this.message, name: this.name}),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).then(response => {
+        this.handlingResponse(response);
+      });
+    },
+    checkingForm(e) {
+      this.errors = {name:[], message: []};
+
+      if (!this.name) {
+        this.errors.name.push("Name required.");
+      }
+      if (!this.message) {
+        this.errors.message.push("Message required.");
+      }
+
+      if(!!this.hasErrors()){
+        return false
+      }
+      this.tweeting();
+      e.preventDefault();
+    },
+    async handlingResponse(response){
+      if(response.ok){
+        this.message = '';
+        this.name = '';
+        this.$emit('twitted');
+      } else {
+        let data = await response.json();
+        Object.entries(data).map(([field, error]) => {
+          this.errors[field] = this.errors[field].concat(error)
+        });
       }
     },
-    methods: {
-      tweeting() {
-        fetch('/tweets/', {
-            method: 'POST',
-            body: JSON.stringify({message: this.message, name: this.username}),
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        }).then(response => {
-            this.message = '';
-            this.username = '';
-        })
-      }
-    },
+    hasErrors() {
+      return this.errors.message.length || this.errors.name.length
+    }
+  },
+  components: {
+    errorsComponent
+  }
 });
