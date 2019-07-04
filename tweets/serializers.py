@@ -7,4 +7,4 @@ class TweetSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Tweet
         fields = ('name', 'message', 'date')
-        read_only_fields = ('date',)
+        extra_kwargs = {'date': {'format': "%m/%d/%Y %H:%M:%S"}}
