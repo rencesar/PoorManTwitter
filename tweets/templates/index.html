@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block container %}
+    <div id="vue-container">
+    {% verbatim %}
+        <tweet-form></tweet-form>
+        <h1 style="margin-top: 25px">Tweets</h1>
+        <tweets></tweets>
+    {% endverbatim %}
+    </div>
+{% endblock %}
+
+{% block script %}
+<script src='{% static "js/tweetform.js" %}'></script>
+<script src='{% static "js/tweets.js" %}'></script>
+
+<script>
+let app6 = new Vue({
+  el: '#vue-container',
+  components: {
+    tweets, tweetForm,
+  }
+})
+</script>
+{% endblock %}
