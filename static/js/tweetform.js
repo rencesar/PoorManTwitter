@@ -32,7 +32,7 @@ let tweetForm = Vue.component('tweet-form', {
         <error-message v-bind:errors="errors.message"></error-message>
         <input v-model="message" id="messageInput" type="text" class="form-control" placeholder="Message" maxlength="50" required>
       </div>
-      <button type="submit" class="btn btn-primary" >Submit</button>
+      <button type="submit" class="btn btn-success" >Submit</button>
     </form>
   `,
   data () {
@@ -43,17 +43,18 @@ let tweetForm = Vue.component('tweet-form', {
     }
   },
   methods: {
-    tweeting() {
-      fetch('/tweets/', {
-        method: 'POST',
-        body: JSON.stringify({message: this.message, name: this.name}),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }).then(response => {
-        this.handlingResponse(response);
-      });
+    async tweeting() {
+      let response = await this.$http.post('/tweets/', {message: this.message, name: this.name}).then(
+        response => {
+          this.message = '';
+          this.name = '';
+          this.$emit('twitted');
+        }, response => {
+          this.handlingFailResponse();
+        }
+      );
     },
+
     checkingForm(e) {
       this.errors = {name:[], message: []};
 
@@ -70,17 +71,12 @@ let tweetForm = Vue.component('tweet-form', {
       this.tweeting();
       e.preventDefault();
     },
-    async handlingResponse(response){
-      if(response.ok){
-        this.message = '';
-        this.name = '';
-        this.$emit('twitted');
-      } else {
-        let data = await response.json();
-        Object.entries(data).map(([field, error]) => {
-          this.errors[field] = this.errors[field].concat(error)
-        });
-      }
+
+    async handlingFailResponse(response){
+      let data = await response.json();
+      Object.entries(data).map(([field, error]) => {
+        this.errors[field] = this.errors[field].concat(error)
+      });
     },
     hasErrors() {
       return this.errors.message.length || this.errors.name.length
